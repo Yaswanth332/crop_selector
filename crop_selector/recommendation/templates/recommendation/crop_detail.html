@@ -1,85 +1,517 @@
 {% extends 'recommendation/base.html' %}
-{% block title %}{{ crop.name }} Details | Crop Selector{% endblock %}
+{% block title %}{{ crop.name }} | Smart Crop Advisor{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary: #2e7d32;
+        --primary-light: #4caf50;
+        --primary-dark: #1b5e20;
+        --secondary: #ff9800;
+        --accent: #2196f3;
+        --text-dark: #263238;
+        --text-light: #607d8b;
+        --bg-light: #f5f7fa;
+        --bg-dark: #121212;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --card-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        font-family: 'Open Sans', sans-serif;
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+        background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2670&auto=format&fit=crop');
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+        background-blend-mode: overlay;
+        background-color: rgba(245, 247, 250, 0.9);
+    }
+
+    [data-bs-theme="dark"] body {
+        background-color: var(--bg-dark);
+        color: #e0e0e0;
+        background-blend-mode: overlay;
+        background-color: rgba(18, 18, 18, 0.9);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+    }
+
+    /* Main container */
+    .crop-detail-container {
+        padding: 3rem 0;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    /* Animated background particles */
+    .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* Main card styling */
+    .crop-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateY(30px);
+        opacity: 0;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .crop-card.animate-in {
+        animation: slideUpFadeIn 0.8s ease-out forwards;
+    }
+
+    [data-bs-theme="dark"] .crop-card {
+        background: rgba(30, 30, 30, 0.9);
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .crop-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Image section */
+    .crop-image-container {
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        min-height: 400px;
+    }
+
+    .crop-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .crop-image-container:hover .crop-image {
+        transform: scale(1.05);
+    }
+
+    .crop-image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        padding: 2rem 1.5rem;
+        color: white;
+    }
+
+    .crop-image-overlay h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Content section */
+    .crop-content {
+        padding: 2.5rem;
+    }
+
+    .crop-title {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        position: relative;
+        display: inline-block;
+    }
+
+    .crop-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        border-radius: 3px;
+    }
+
+    .crop-description {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        margin-bottom: 2rem;
+        color: var(--text-light);
+    }
+
+    /* Requirements section */
+    .requirements-title {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .requirement-item {
+        margin-bottom: 1.25rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    [data-bs-theme="dark"] .requirement-item {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    .requirement-item:hover {
+        transform: translateX(5px);
+    }
+
+    .requirement-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .requirement-value {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background: rgba(76, 175, 80, 0.1);
+        display: inline-block;
+        color: var(--primary);
+    }
+
+    /* Growing tips section */
+    .tips-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(30px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .tips-card.animate-in {
+        animation: slideUpFadeIn 0.8s ease-out 0.2s forwards;
+    }
+
+    [data-bs-theme="dark"] .tips-card {
+        background: rgba(30, 30, 30, 0.9);
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .tips-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .tips-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+
+    .tips-title {
+        font-size: 1.4rem;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .tip-item {
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    [data-bs-theme="dark"] .tip-item {
+        border-bottom-color: rgba(255,255,255,0.05);
+    }
+
+    .tip-item:last-child {
+        border-bottom: none;
+    }
+
+    .tip-item:hover {
+        background: rgba(76, 175, 80, 0.05);
+    }
+
+    .tip-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tip-content {
+        color: var(--text-light);
+        line-height: 1.7;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-back {
+        background: rgba(108, 117, 125, 0.1);
+        border: 2px solid rgba(108, 117, 125, 0.3);
+        color: #6c757d;
+        border-radius: 50px;
+        padding: 0.75rem 1.75rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-back:hover {
+        background: rgba(108, 117, 125, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .btn-new-recommendation {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 0.75rem 1.75rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-new-recommendation:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-history {
+        background: transparent;
+        border: 2px solid rgba(13, 110, 253, 0.3);
+        color: #0d6efd;
+        border-radius: 50px;
+        padding: 0.75rem 1.75rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-history:hover {
+        background: rgba(13, 110, 253, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+
+    /* Animations */
+    @keyframes slideUpFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .crop-content {
+            padding: 2rem;
+        }
+        
+        .crop-title {
+            font-size: 1.8rem;
+        }
+        
+        .requirements-title {
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .crop-card {
+            flex-direction: column;
+        }
+        
+        .crop-image-container {
+            min-height: 300px;
+        }
+        
+        .crop-content {
+            padding: 1.5rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .btn-back, .btn-new-recommendation, .btn-history {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .crop-title {
+            font-size: 1.5rem;
+        }
+        
+        .crop-description {
+            font-size: 1rem;
+        }
+        
+        .tip-item {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="crop-detail-container">
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+    
     <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow-lg border-0 animate__animated animate__fadeIn">
+        <div class="col-lg-10">
+            <div class="crop-card">
                 <div class="row g-0">
                     <div class="col-md-5">
-                        {% if crop.image %}
-                            <img src="{{ crop.image.url }}" alt="{{ crop.name }}" class="img-fluid rounded-start" style="height: 100%; object-fit: cover; min-height: 400px;">
-                        {% else %}
-                            <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=500&h=400&q=80" alt="Generic Crop Image" class="img-fluid rounded-start" style="height: 100%; object-fit: cover; min-height: 400px;">
-                        {% endif %}
+                        <div class="crop-image-container">
+                            {% if crop.image %}
+                                <img src="{{ crop.image.url }}" alt="{{ crop.name }}" class="crop-image">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=500&h=500&q=80" alt="Generic Crop Image" class="crop-image">
+                            {% endif %}
+                            <div class="crop-image-overlay">
+                                <h3>{{ crop.name }}</h3>
+                                <p class="mb-0">{{ crop.season|capfirst }} Season Crop</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-7">
-                        <div class="card-body p-4">
-                            <h2 class="card-title text-success mb-3">🌾 {{ crop.name }}</h2>
-                            <p class="card-text lead">{{ crop.description }}</p>
+                        <div class="crop-content">
+                            <h1 class="crop-title">{{ crop.name }}</h1>
+                            <p class="crop-description">{{ crop.description }}</p>
 
-                            <h5 class="mt-4 mb-3">📌 Crop Requirements</h5>
+                            <h3 class="requirements-title">
+                                <i class="fas fa-clipboard-check"></i> Optimal Growing Conditions
+                            </h3>
+                            
                             <div class="row">
                                 <div class="col-md-6">
-                                    <ul class="list-group list-group-flush mb-3">
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>🌱 Soil Texture:</strong> 
-                                            <span class="badge bg-secondary ms-2">{{ crop.soil_texture|capfirst }}</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>⚖️ Soil pH Range:</strong> 
-                                            <span class="text-info">{{ crop.soil_ph_min }} – {{ crop.soil_ph_max }}</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>🍃 Organic Matter:</strong> 
-                                            <span class="badge bg-success ms-2">{{ crop.organic_matter|capfirst }}</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>💧 Drainage:</strong> 
-                                            <span class="badge bg-info ms-2">{{ crop.drainage_status|capfirst }}</span>
-                                        </li>
-                                    </ul>
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-mountain text-success"></i> Soil Texture
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.soil_texture|capfirst }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-flask text-info"></i> Soil pH Range
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.soil_ph_min }} – {{ crop.soil_ph_max }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-leaf text-success"></i> Organic Matter
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.organic_matter|capfirst }}
+                                        </div>
+                                    </div>
                                 </div>
+                                
                                 <div class="col-md-6">
-                                    <ul class="list-group list-group-flush mb-3">
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>🌧️ Rainfall Range:</strong> 
-                                            <span class="text-primary">{{ crop.rainfall_min }} – {{ crop.rainfall_max }} mm</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>🌡️ Temperature Range:</strong> 
-                                            <span class="text-warning">{{ crop.temperature_min }} – {{ crop.temperature_max }} °C</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>📅 Best Season:</strong> 
-                                            <span class="badge bg-warning text-dark ms-2">{{ crop.season|capfirst }}</span>
-                                        </li>
-                                        <li class="list-group-item border-0 px-0">
-                                            <strong>🔄 Previous Crop:</strong> 
-                                            <span class="badge bg-outline-secondary ms-2">
-                                                {% if crop.previous_crop %}
-                                                    {{ crop.previous_crop|capfirst }}
-                                                {% else %}
-                                                    Any
-                                                {% endif %}
-                                            </span>
-                                        </li>
-                                    </ul>
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-tint text-primary"></i> Drainage
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.drainage_status|capfirst }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-cloud-rain text-info"></i> Rainfall Range
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.rainfall_min }} – {{ crop.rainfall_max }} mm
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="requirement-item">
+                                        <div class="requirement-label">
+                                            <i class="fas fa-thermometer-half text-warning"></i> Temperature Range
+                                        </div>
+                                        <div class="requirement-value">
+                                            {{ crop.temperature_min }} – {{ crop.temperature_max }} °C
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
+                            
                             <!-- Action Buttons -->
-                            <div class="d-flex gap-2 mt-4 flex-wrap">
-                                <a href="javascript:history.back()" class="btn btn-secondary">
-                                    ⬅️ Go Back
+                            <div class="action-buttons">
+                                <a href="javascript:history.back()" class="btn-back">
+                                    <i class="fas fa-arrow-left"></i> Go Back
                                 </a>
-                                <a href="{% url 'recommend' %}" class="btn btn-success">
-                                    🌱 New Recommendation
+                                <a href="{% url 'recommend' %}" class="btn-new-recommendation">
+                                    <i class="fas fa-seedling"></i> New Recommendation
                                 </a>
                                 {% if user.is_authenticated %}
-                                    <a href="{% url 'past_recommendations' %}" class="btn btn-outline-info">
-                                        📋 My History
+                                    <a href="{% url 'past_recommendations' %}" class="btn-history">
+                                        <i class="fas fa-history"></i> My History
                                     </a>
                                 {% endif %}
                             </div>
@@ -90,36 +522,56 @@
         </div>
     </div>
 
-    <!-- Additional Info Section -->
+    <!-- Growing Tips Section -->
     <div class="row justify-content-center mt-4">
-        <div class="col-md-10">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">💡 Growing Tips for {{ crop.name }}</h5>
+        <div class="col-lg-10">
+            <div class="tips-card">
+                <div class="tips-header">
+                    <h4 class="tips-title">
+                        <i class="fas fa-lightbulb"></i> Expert Growing Tips for {{ crop.name }}
+                    </h4>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h6>🌱 Soil Preparation</h6>
-                            <p class="small text-muted">
-                                Ensure your soil matches the {{ crop.soil_texture }} texture requirement with 
-                                pH between {{ crop.soil_ph_min }}-{{ crop.soil_ph_max }} for optimal growth.
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>🌦️ Climate Needs</h6>
-                            <p class="small text-muted">
-                                This crop thrives in {{ crop.temperature_min }}-{{ crop.temperature_max }}°C temperature 
-                                with {{ crop.rainfall_min }}-{{ crop.rainfall_max }}mm annual rainfall.
-                            </p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>📅 Best Timing</h6>
-                            <p class="small text-muted">
-                                Plant during {{ crop.season }} season for best results. 
-                                {% if crop.previous_crop %}
-                                    Works well after {{ crop.previous_crop }} crops.
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-4 tip-item">
+                            <h5 class="tip-title">
+                                <i class="fas fa-seedling"></i> Soil Preparation
+                            </h5>
+                            <p class="tip-content">
+                                Prepare your {{ crop.soil_texture }} soil with pH between {{ crop.soil_ph_min }}-{{ crop.soil_ph_max }}. 
+                                {% if crop.organic_matter == "high" %}
+                                    Add compost or manure to maintain high organic content.
+                                {% else %}
+                                    Moderate organic matter is sufficient for healthy growth.
                                 {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-4 tip-item">
+                            <h5 class="tip-title">
+                                <i class="fas fa-cloud-sun"></i> Climate Management
+                            </h5>
+                            <p class="tip-content">
+                                Thrives in {{ crop.temperature_min }}-{{ crop.temperature_max }}°C with 
+                                {{ crop.rainfall_min }}-{{ crop.rainfall_max }}mm rainfall. 
+                                {% if crop.drainage_status == "well" %}
+                                    Ensure excellent drainage to prevent waterlogging.
+                                {% else %}
+                                    Tolerates {{ crop.drainage_status }} drainage conditions.
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-4 tip-item">
+                            <h5 class="tip-title">
+                                <i class="fas fa-calendar-alt"></i> Seasonal Advice
+                            </h5>
+                            <p class="tip-content">
+                                Best planted during {{ crop.season }} season. 
+                                {% if crop.previous_crop %}
+                                    Ideal after {{ crop.previous_crop }} in crop rotation. 
+                                {% endif %}
+                                Monitor growth stages and adjust care accordingly throughout the season.
                             </p>
                         </div>
                     </div>
@@ -129,65 +581,66 @@
     </div>
 </div>
 
-<style>
-    .card {
-        transition: transform 0.3s ease;
-        border-radius: 15px;
-    }
-    
-    .card:hover {
-        transform: scale(1.02);
-    }
-    
-    .list-group-item {
-        background-color: transparent;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-    }
-    
-    [data-bs-theme="dark"] .list-group-item {
-        border-bottom-color: rgba(255,255,255,0.1);
-    }
-    
-    [data-bs-theme="dark"] .card-header {
-        background-color: rgba(33, 37, 41, 0.75) !important;
-        border-bottom-color: rgba(255,255,255,0.20);
-    }
-    
-    [data-bs-theme="dark"] .text-muted {
-        color: rgba(255, 255, 255, 0.8) !important;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    [data-bs-theme="dark"] .card-title,
-    [data-bs-theme="dark"] .card-text,
-    [data-bs-theme="dark"] h1,
-    [data-bs-theme="dark"] h2,
-    [data-bs-theme="dark"] h3,
-    [data-bs-theme="dark"] h4,
-    [data-bs-theme="dark"] h5,
-    [data-bs-theme="dark"] h6 {
-        color: #ffffff;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    }
-    
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.6rem;
-    }
-    
-    @media (max-width: 768px) {
-        .card-body {
-            padding: 2rem 1rem;
-        }
+<script>
+    // Create animated background particles
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = window.innerWidth < 768 ? 15 : 30;
         
-        .d-flex.gap-2 {
-            gap: 0.5rem !important;
-        }
-        
-        .btn {
-            font-size: 0.875rem;
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Random size between 5px and 15px
+            const size = Math.random() * 10 + 5;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Random position
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            
+            // Random opacity
+            particle.style.opacity = Math.random() * 0.5 + 0.1;
+            
+            // Random animation duration
+            const duration = Math.random() * 10 + 10;
+            particle.style.animationDuration = `${duration}s`;
+            
+            // Random delay
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            
+            particlesContainer.appendChild(particle);
         }
     }
-</style>
+    
+    // Scroll animations
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all elements that should animate
+    document.addEventListener('DOMContentLoaded', function() {
+        createParticles();
+        
+        // Main card
+        const cropCard = document.querySelector('.crop-card');
+        if (cropCard) observer.observe(cropCard);
+        
+        // Tips card
+        const tipsCard = document.querySelector('.tips-card');
+        if (tipsCard) observer.observe(tipsCard);
+    });
+</script>
 {% endblock %}
